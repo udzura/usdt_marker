@@ -20,6 +20,4 @@ Gem::Specification.new do |spec|
   spec.extensions    = ["ext/usdt_marker/extconf.rb"]
 
   spec.add_development_dependency "bundler", ">= 1.6"
-  spec.add_development_dependency "rake", "~> 13.0"
-  spec.add_development_dependency "rake-compiler"
 end
