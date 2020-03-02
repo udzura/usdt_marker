@@ -1,6 +1,6 @@
 # UsdtMarker
 
-(BADGE)
+[![Gem Version](https://badge.fury.io/rb/usdt_marker.svg)](https://badge.fury.io/rb/usdt_marker)
 
 ## Installation
 
