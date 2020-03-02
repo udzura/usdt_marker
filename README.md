@@ -43,7 +43,7 @@ irb(main):002:0> puts $$
 19644
 ```
 
-On onother terminal, hit `bpftrace` to find the name of USDT; USDT may be defined in gem's shared object:
+On another terminal, hit `bpftrace` to find the name of USDT; USDT may be defined in gem's shared object:
 
 ```console
 $ sudo bpftrace -p 19644 -l 'usdt:*' | grep ruby
