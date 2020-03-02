@@ -1,8 +1,6 @@
 # UsdtMarker
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/usdt_marker`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+(BADGE)
 
 ## Installation
 
@@ -20,9 +18,93 @@ Or install it yourself as:
 
     $ gem install usdt_marker
 
+### Limitations
+
+* This is tested only against Linux system; My environment uses kernel 5.0.0 :)
+  * Extention requires a package named `systemtap-sdt-dev` or something alike
+* I know some of UNIX systems also has `<sys/sdt.h>` header file, but I'm not going to test.
+  * Your supports are welcomed!
+
 ## Usage
 
-TODO: Write usage instructions here
+Very simple tutorial.
+
+Install those tools to your system:
+
+* package `systemtap-sdt-dev` or something alike.
+* `bpftrace`. We recommend via OS package, binary or self-build, because snap version of bpftrace cannot recognize uprobe/usdt for now.
+* Ruby. Some systems may require `ruby-dev` package.
+
+Then invoke your irb, e.g. in the bundle environment with usdt_marker.
+
+```ruby
+irb(main):001:0> require 'usdt_marker'
+irb(main):002:0> puts $$
+19644
+```
+
+On onother terminal, hit `bpftrace` to find the name of USDT; USDT may be defined in gem's shared object:
+
+```console
+$ sudo bpftrace -p 19644 -l 'usdt:*' | grep ruby
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:array__create
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:raise
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:gc__sweep__end
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:gc__sweep__begin
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:gc__mark__end
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:gc__mark__begin
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:hash__create
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:load__entry
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:load__return
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:find__require__return
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:require__entry
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:find__require__entry
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:require__return
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:object__create
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:parse__begin
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:parse__end
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:string__create
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:symbol__create
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:method__cache__clear
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:cmethod__entry
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:cmethod__return
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:method__return
+usdt:/root/.rbenv/versions/2.6.5/lib/libruby.so.2.6.5:ruby:method__entry
+usdt:/usr/local/ghq/github.com/udzura/usdt_marker/lib/usdt_marker/usdt_marker.so:rubygem:usdt_marker_i1s1
+usdt:/usr/local/ghq/github.com/udzura/usdt_marker/lib/usdt_marker/usdt_marker.so:rubygem:usdt_marker_i2
+```
+
+Then start tracing:
+
+```
+$ sudo bpftrace -p 19644 -e \
+  'usdt:/usr/local/ghq/github.com/udzura/usdt_marker/lib/usdt_marker/usdt_marker.so:rubygem:usdt_marker_i1s1 {
+    printf("Fire!: %d, %s\n", arg0, str(arg1));
+  }'
+Attaching 1 probe...
+```
+
+Return to irb, hit probe methods:
+
+```ruby
+irb(main):003:0> UsdtMarker.probe_i1s1(2020, "hello, world!")
+=> true
+irb(main):004:0> UsdtMarker.probe_i1s1(2020, "hello, world! again")
+=> true
+```
+
+After all bpftrace process traces these events:
+
+```
+...
+Fire!: 2020, hello, world!
+Fire!: 2020, hello, world! again
+```
+
+Method-USDT counterparts:
+
+* `UsdtMarker.probe_i1s1(<Integer>, <String>)` - `rubygem:usdt_marker_i1s1`
+* `UsdtMarker.probe_i2(<Integer>, <Integer>)` - `rubygem:usdt_marker_i2`
 
 ## Development
 
